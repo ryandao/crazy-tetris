@@ -1,0 +1,18 @@
+body      { font-family: Helvetica, sans-serif; }
+#tetris   { margin: 1em auto; padding: 1em; border: 4px solid black; border-radius: 10px; background-color: #F8F8F8; }
+#stats    { display: inline-block; vertical-align: top; }
+#canvas   { display: inline-block; vertical-align: top; box-shadow: 10px 10px 10px #999; border: 2px solid #333; }
+#menu     { display: inline-block; vertical-align: top; position: relative; }
+#menu p   { margin: 0.5em 0; text-align: center; }
+#menu p a { text-decoration: none; color: black; }
+#upcoming { display: block; margin: 0 auto; background-color: #E0E0E0; }
+#score    { color: red; font-weight: bold; vertical-align: middle; }
+#rows     { color: blue; font-weight: bold; vertical-align: middle; }
+#stats    { position: absolute; bottom: 0em; right: 1em; }
+@media screen and (min-width:   0px) and (min-height:   0px)  { #tetris { font-size: 0.75em; width: 300px; } #canvas { width: 300px; height: 150px; } } /* 10px chunks */
+@media screen and (min-width: 400px) and (min-height: 400px)  { #tetris { font-size: 1.00em; width: 500px; } #canvas { width: 500px; height: 250px; } } /* 15px chunks */
+@media screen and (min-width: 500px) and (min-height: 500px)  { #tetris { font-size: 1.25em; width: 700px; } #canvas { width: 700px; height: 350px; } } /* 20px chunks */
+@media screen and (min-width: 600px) and (min-height: 600px)  { #tetris { font-size: 1.50em; width: 900px; } #canvas { width: 900px; height: 450px; } } /* 25px chunks */
+@media screen and (min-width: 700px) and (min-height: 700px)  { #tetris { font-size: 1.75em; width: 1100px; } #canvas { width: 1100px; height: 550px; } } /* 30px chunks */
+@media screen and (min-width: 800px) and (min-height: 800px)  { #tetris { font-size: 2.00em; width: 1300px; } #canvas { width: 1300px; height: 650px; } } /* 35px chunks */
+@media screen and (min-width: 900px) and (min-height: 900px)  { #tetris { font-size: 2.25em; width: 1500px; } #canvas { width: 1500px; height: 750px; } } /* 40px chunks */

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Javascript Tetris</title>
+    <link href="stylesheets/game.css" type="text/css" rel="stylesheet"></link>
+  </head>
+
+  <body>
+
+    <div id="tetris">
+      <div id="menu" style="display:none;">
+        <p id="start"><a href="javascript:play();">Press Space to Play.</a></p>
+        <p><canvas id="upcoming"></canvas></p>
+        <p>score <span id="score">00000</span></p>
+        <p>rows <span id="rows">0</span></p>
+      </div>
+      <canvas id="canvas">
+        Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
+      </canvas>
+    </div>
+
+    <script type='text/javascript' src='js/underscore-min.js'></script>
+    <script type='text/javascript' src='http://localhost:8080/socket.io/socket.io.js'></script>
+    <script type="text/javascript" src='js/socket.js'></script>
+    <script src="js/stats.js"></script>
+    <script src="js/game.js"></script>
+  </body>
+</html>
