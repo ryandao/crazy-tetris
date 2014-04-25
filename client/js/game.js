@@ -1,39 +1,19 @@
-//-------------------------------------------------------------------------
-// base helper methods
-//-------------------------------------------------------------------------
+var socket = io.connect('http://localhost:8080');
+window.userPieces = {};
 
-function get(id)        { return document.getElementById(id);  };
-function hide(id)       { get(id).style.visibility = 'hidden'; };
-function show(id)       { get(id).style.visibility = null;     };
-function html(id, html) { get(id).innerHTML = html;            };
+socket.on('connectionAck', function(data) {
+  window.sId = data.sId;
+  window.color = data.color;
+  window.blocks = data.blocks;
+  window.current = data.current;
 
-function timestamp()           { return new Date().getTime();                             };
-function random(min, max)      { return (min + (Math.random() * (max - min)));            };
-function randomChoice(choices) { return choices[Math.round(random(0, choices.length-1))]; };
+  // Run the game
+  run();
+});
 
-if (!window.requestAnimationFrame) { // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-  window.requestAnimationFrame = window.webkitRequestAnimationFrame ||
-                                 window.mozRequestAnimationFrame    ||
-                                 window.oRequestAnimationFrame      ||
-                                 window.msRequestAnimationFrame     ||
-                                 function(callback, element) {
-                                   window.setTimeout(callback, 1000 / 60);
-                                 }
-}
-
-//-------------------------------------------------------------------------
-// base data structure
-//-------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------
-// line object that is a linked list item storing a referent to the next line
-//-------------------------------------------------------------------------
-function Line(lineNum) {
-  this.lineNum = lineNum;
-
-  this.nextLine = function() { return this.nextLine; };
-  this.setNextLine = function(nextLine) { this.nextLine = nextLine; };
-}
+socket.on('otherPlayerPieceChanged', function(data) {
+  _.extend(window.userPieces, data);
+});
 
 //-------------------------------------------------------------------------
 // game constants
@@ -41,15 +21,12 @@ function Line(lineNum) {
 
 var KEY     = { ESC: 27, SPACE: 32, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40 },
     DIR     = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 },
-    stats   = new Stats(),
-    canvas  = get('canvas'),
-    ctx     = canvas.getContext('2d'),
-    ucanvas = get('upcoming'),
-    uctx    = ucanvas.getContext('2d'),
-    speed   = { start: 0.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
-    nx      = 40, // width of tetris court (in blocks)
+    canvas  = document.getElementById('canvas'),
+    nx      = 20, // width of tetris court (in blocks)
     ny      = 20, // height of tetris court (in blocks)
-    nu      = 5;  // width/height of upcoming preview (in blocks)
+    ctx     = canvas.getContext('2d'),
+    ucanvas = document.getElementById('upcoming'),
+    uctx    = ucanvas.getContext('2d');
 
 //-------------------------------------------------------------------------
 // game variables (initialized during reset)
@@ -58,13 +35,12 @@ var KEY     = { ESC: 27, SPACE: 32, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40 },
 var dx, dy,        // pixel size of a single tetris block
     blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
     actions,       // queue of user actions (inputs)
-    playing,       // true|false - game is in progress
+    playing = true,       // true|false - game is in progress
     dt,            // time since starting this game
     current,       // the current piece
     next,          // the next piece
     rows,          // number of completed rows in the current game
-    step,          // how long before current piece drops by 1 row
-    lines;         // linked list representing the court rows including deleted rows
+    step;          // how long before current piece drops by 1 row
 
 //-------------------------------------------------------------------------
 // tetris pieces
@@ -107,86 +83,18 @@ function eachblock(type, x, y, dir, fn) {
   }
 };
 
-//-----------------------------------------------------
-// check if a piece can fit into a position in the grid
-//-----------------------------------------------------
-function occupied(type, x, y, dir) {
-  var result = false;
-
-  eachblock(type, x, y, dir, function(x, y) {
-    if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) || getBlock(x,y) || getPlayerBlock(x, y)) {
-      result = true;
-    }
-  });
-
-  return result;
-};
-
-function unoccupied(type, x, y, dir) {
-  return !occupied(type, x, y, dir);
-};
-
-function hitTheGround(type, x, y, dir) {
-  var result = false;
-  eachblock(type, x, y, dir, function(x, y) {
-    if ((y < 0) || (y >= ny) || getBlock(x, y)) {
-      result = true;
-    }
-  });
-
-  return result;
-}
-
-//-----------------------------------------
-// start with 4 instances of each piece and
-// pick randomly until the 'bag is empty'
-//-----------------------------------------
-var pieces = [];
-function randomPiece() {
-  if (pieces.length == 0)
-    pieces = [i,i,i,i,j,j,j,j,l,l,l,l,o,o,o,o,s,s,s,s,t,t,t,t,z,z,z,z];
-  var type = pieces.splice(random(0, pieces.length-1), 1)[0];
-
-  // Set the type color to the user's color
-  type.color = window.color;
-
-  return { type: type, dir: DIR.UP, x: Math.round(random(0, nx - type.size)), y: 0 };
-};
-
-
-//-------------------------------------------------------------------------
-// GAME LOOP
-//-------------------------------------------------------------------------
-
 function run() {
-
-  showStats(); // initialize FPS counter
   addEvents(); // attach keydown and resize events
+  invalidate();
+  resize();
+  draw();
 
-  socket.on('blocksChanged', function(data) {
-    blocks = data;
-  });
-
-  var last = now = timestamp();
-  function frame() {
-    now = timestamp();
-    update(Math.min(1, (now - last) / 1000.0)); // using requestAnimationFrame have to be able to handle large delta's caused when it 'hibernates' in a background or non-visible tab
+  socket.on('tick', function(data) {
+    blocks = data.blocks;
+    current = data.current;
+    invalidate();
     draw();
-    stats.update();
-    last = now;
-
-    requestAnimationFrame(frame, canvas);
-  }
-
-  resize(); // setup all our sizing information
-  reset();  // reset the per-game variables
-  frame();  // start the first frame
-
-};
-
-function showStats() {
-  stats.domElement.id = 'stats';
-  get('menu').appendChild(stats.domElement);
+  });
 };
 
 function addEvents() {
@@ -206,241 +114,20 @@ function resize(event) {
 };
 
 function keydown(ev) {
-  var handled = false;
-  if (playing) {
-    switch(ev.keyCode) {
-      case KEY.LEFT:   actions.push(DIR.LEFT);  handled = true; break;
-      case KEY.RIGHT:  actions.push(DIR.RIGHT); handled = true; break;
-      case KEY.UP:     actions.push(DIR.UP);    handled = true; break;
-      case KEY.DOWN:   actions.push(DIR.DOWN);  handled = true; break;
-      case KEY.ESC:    lose();                  handled = true; break;
-    }
+  switch(ev.keyCode) {
+    case KEY.LEFT:   sendAction(DIR.LEFT); break;
+    case KEY.RIGHT:  sendAction(DIR.RIGHT); break;
+    case KEY.UP:     sendAction(DIR.UP); break;
+    case KEY.DOWN:   sendAction(DIR.DOWN); break;
+    case KEY.ESC:    lose(); break;
   }
-  else if (ev.keyCode == KEY.SPACE) {
-    play();
-    handled = true;
-  }
-  if (handled)
-    ev.preventDefault(); // prevent arrow keys from scrolling the page (supported in IE9+ and all other browsers)
+
+  ev.preventDefault(); // prevent arrow keys from scrolling the page (supported in IE9+ and all other browsers)
 };
 
-//-------------------------------------------------------------------------
-// GAME LOGIC
-//-------------------------------------------------------------------------
-
-function play() {
-  hide('start');
-  reset();
-  playing = true;
-};
-
-function lose() {
-  console.log('lose');
-  show('start');
-  playing = false;
-};
-
-function clearRows() {
-  setRows(0);
-};
-
-function setRows(n) {
-  rows = n;
-  step = Math.max(speed.min, speed.start - (speed.decrement*rows));
-  invalidateRows();
-};
-
-function addRows(n) {
-  setRows(rows + n);
-};
-
-function getBlock(x,y) {
-  return (blocks && blocks[x] ? blocks[x][y] : null);
-};
-
-function setBlock(x,y,type)     {
-  blocks[x] = blocks[x] || [];
-  blocks[x][y] = type;
-  invalidate();
-
-  // Update the blocks in the server
-  socket.emit('blocksChanged', { x: x, y: y, type: type });
-};
-
-function clearBlocks() {
-  blocks = [];
-  invalidate();
-};
-
-function clearActions() {
-  actions = [];
-};
-
-function setCurrentPiece(piece) {
-  current = piece || randomPiece();
-  invalidate();
-
-  // Update the current piece in the server
-  socket.emit('currentPieceChanged', current);
-};
-
-function setNextPiece(piece) {
-  next = piece || randomPiece();
-  invalidateNext();
-};
-
-function resetLines() {
-  lines = [];
-  var x;
-  for (x = 0; x < ny - 1; x ++) {
-    var line = new Line(x);
-    var nextLine = new Line(x + 1);
-    line.setNextLine(nextLine);
-
-  }
+function sendAction(action) {
+  socket.emit('userAction', action);
 }
-
-// Get the block occupied by other players' pieces
-function getPlayerBlock(x, y) {
-  result = false;
-  for (var key in window.userPieces) {
-    if (key !== window.userID) {
-      tempPiece = window.userPieces[key];
-      if (tempPiece) {
-        eachblock(tempPiece.type, tempPiece.x, tempPiece.y, tempPiece.dir, function(tempX, tempY) {
-          if (x === tempX && y === tempY) {
-            result = true;
-          }
-        });
-      }
-    }
-  }
-
-  return result;
-}
-
-function reset() {
-  dt = 0;
-  clearActions();
-  clearBlocks();
-  clearRows();
-  setCurrentPiece(next);
-  setNextPiece();
-};
-
-function update(idt) {
-  if (playing) {
-    handle(actions.shift());
-    dt = dt + idt;
-    if (dt > step) {
-      dt = dt - step;
-      drop();
-    }
-  }
-};
-
-function handle(action) {
-  switch(action) {
-    case DIR.LEFT:  move(DIR.LEFT);  break;
-    case DIR.RIGHT: move(DIR.RIGHT); break;
-    case DIR.UP:    rotate();        break;
-    case DIR.DOWN:  drop();          break;
-  }
-};
-
-function move(dir) {
-  var x = current.x, y = current.y;
-  switch(dir) {
-    case DIR.RIGHT: x = x + 1; break;
-    case DIR.LEFT:  x = x - 1; break;
-    case DIR.DOWN:  y = y + 1; break;
-  }
-  if (unoccupied(current.type, x, y, current.dir)) {
-    current.x = x;
-    current.y = y;
-    invalidate();
-
-    // Update the current piece position in server
-    socket.emit('currentPieceChanged', { x: x, y: y });
-
-    return true;
-  }
-
-  // HACK Return null if the piece hits the ground
-  //   so that we can distinguish between other collision
-  else {
-    return false;
-  }
-};
-
-function rotate(dir) {
-  var newdir = (current.dir == DIR.MAX ? DIR.MIN : current.dir + 1);
-  if (unoccupied(current.type, current.x, current.y, newdir)) {
-    current.dir = newdir;
-    invalidate();
-
-    // Update the current piece position in server
-    socket.emit('currentPieceChanged', { dir: newdir });
-  }
-};
-
-function drop() {
-  if (!move(DIR.DOWN)) {
-    // Make sure it cannot move because hitting the ground
-    if (hitTheGround(current.type, current.x, current.y + 1, current.dir)) {
-      dropPiece();
-      removeLines();
-      setCurrentPiece(next);
-      setNextPiece(randomPiece());
-      clearActions();
-      if (occupied(current.type, current.x, current.y, current.dir)) {
-        lose();
-      }
-    }
-  }
-};
-
-function dropPiece() {
-  eachblock(current.type, current.x, current.y, current.dir, function(x, y) {
-    setBlock(x, y, true);
-  });
-};
-
-function removeLines() {
-  var x, y, complete, n = 0;
-  for(y = ny ; y > 0 ; --y) {
-    complete = true;
-    for(x = 0 ; x < nx ; ++x) {
-      if (!getBlock(x, y))
-        complete = false;
-    }
-    if (complete) {
-      removeLine(y);
-      y = y + 1; // recheck same line
-      n++;
-    }
-  }
-  if (n > 0) {
-    addRows(n);
-  }
-};
-
-function removeLine(n) {
-  var x, y;
-  // for(y = n ; y >= 0 ; --y) {
-  //   for(x = 0 ; x < nx ; ++x) {
-  //     if (y == 0) {
-  //       setBlock(x, y, null);
-
-  //     } else {
-  //       setBlock(x, y, getBlock(x, y - 1));
-  //     }
-  //   }
-  // }
-  for (x = 0; x < nx; ++x) {
-    setBlock(x, n, null);
-  }
-};
 
 //-------------------------------------------------------------------------
 // RENDERING
@@ -452,13 +139,17 @@ function invalidate()         { invalid.court  = true; }
 function invalidateNext()     { invalid.next   = true; }
 function invalidateRows()     { invalid.rows   = true; }
 
+function getBlock(x,y) {
+  return (blocks && blocks[x] ? blocks[x][y] : null);
+};
+
 function draw() {
   ctx.save();
   ctx.lineWidth = 1;
   ctx.translate(0.5, 0.5); // for crisp 1px black lines
   drawCourt();
-  drawNext();
-  drawRows();
+  // drawNext();
+  // drawRows();
   ctx.restore();
 };
 
@@ -472,14 +163,14 @@ function drawCourt() {
       drawPiece(ctx, current.type, current.x, current.y, current.dir);
 
       // Draw other players' pieces
-      for (var key in window.userPieces) {
-        if (key !== window.sId) {
-          var piece = window.userPieces[key];
-          if (piece) {
-            drawPiece(ctx, piece.type, piece.x, piece.y, piece.dir);
-          }
-        }
-      }
+      // for (var key in window.userPieces) {
+      //   if (key !== window.sId) {
+      //     var piece = window.userPieces[key];
+      //     if (piece) {
+      //       drawPiece(ctx, piece.type, piece.x, piece.y, piece.dir);
+      //     }
+      //   }
+      // }
     }
     // var currentLine = lines[0];
 
@@ -493,27 +184,6 @@ function drawCourt() {
     }
     ctx.strokeRect(0, 0, nx*dx - 1, ny*dy - 1); // court boundary
     invalid.court = false;
-  }
-};
-
-function drawNext() {
-  if (invalid.next) {
-    var padding = (nu - next.type.size) / 2; // half-arsed attempt at centering next piece display
-    uctx.save();
-    uctx.translate(0.5, 0.5);
-    uctx.clearRect(0, 0, nu*dx, nu*dy);
-    drawPiece(uctx, next.type, padding, padding, next.dir);
-    uctx.strokeStyle = 'black';
-    uctx.strokeRect(0, 0, nu*dx - 1, nu*dy - 1);
-    uctx.restore();
-    invalid.next = false;
-  }
-};
-
-function drawRows() {
-  if (invalid.rows) {
-    html('rows', rows);
-    invalid.rows = false;
   }
 };
 

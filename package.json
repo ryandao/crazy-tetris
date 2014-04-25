@@ -1,0 +1,12 @@
+{
+  "name": "collaborative-tetris",
+  "version": "0.1.0",
+  "author": "Ryan Dao <ryan@ryandao.net>",
+  "description": "A collaborative tetris game.",
+  "dependencies" : {
+    "connect" : "*",
+    "connect-route" : "*",
+    "socket.io" : "*",
+    "underscore" : "*"
+  }
+}
