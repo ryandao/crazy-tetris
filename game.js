@@ -116,6 +116,30 @@ function unoccupied(type, x, y, dir) {
   return !occupied(type, x, y, dir);
 };
 
+// TODO: Clean up this mess.
+function occupiedPlayerBlock(type, x, y, dir, sId) {
+  var result = false;
+
+  eachblock(type, x, y, dir, function(x, y) {
+    for (var psId in currentPieces) {
+      if (currentPieces.hasOwnProperty(psId) && psId !== sId) {
+        var piece = currentPieces[psId];
+
+        eachblock(piece.type, piece.x, piece.y, piece.dir, function(px, py) {
+          if (px === x && py === y) {
+            result = true;
+          }
+        });
+
+        if (result) { break; }
+      }
+    }
+  });
+
+  return result;
+}
+
+
 function hitTheGround(type, x, y, dir) {
   var result = false;
   eachblock(type, x, y, dir, function(x, y) {
@@ -252,14 +276,14 @@ function handleActions() {
 
 function handle(action, piece, sId) {
   switch(action) {
-    case DIR.LEFT:  move(DIR.LEFT, piece);  break;
-    case DIR.RIGHT: move(DIR.RIGHT, piece); break;
-    case DIR.UP:    rotate(piece); break;
+    case DIR.LEFT:  move(DIR.LEFT, piece, sId);  break;
+    case DIR.RIGHT: move(DIR.RIGHT, piece, sId); break;
+    case DIR.UP:    rotate(piece, sId); break;
     case DIR.DOWN:  drop(piece, sId); break;
   }
 };
 
-function move(dir, piece) {
+function move(dir, piece, sId) {
   var x = piece.x, y = piece.y;
 
   switch(dir) {
@@ -268,7 +292,7 @@ function move(dir, piece) {
     case DIR.DOWN:  y = y + 1; break;
   }
 
-  if (unoccupied(piece.type, x, y, piece.dir)) {
+  if (unoccupied(piece.type, x, y, piece.dir) && ! occupiedPlayerBlock(piece.type, x, y, piece.dir, sId)) {
     piece.x = x;
     piece.y = y;
 
@@ -282,15 +306,16 @@ function move(dir, piece) {
   }
 };
 
-function rotate(piece) {
+function rotate(piece, sId) {
   var newdir = (piece.dir == DIR.MAX ? DIR.MIN : piece.dir + 1);
-  if (unoccupied(piece.type, piece.x, piece.y, newdir)) {
+  if (unoccupied(piece.type, piece.x, piece.y, newdir) &&
+      ! occupiedPlayerBlock(piece.type, piece.x, piece.y, newdir, sId)) {
     piece.dir = newdir;
   }
 };
 
 function drop(piece, sId) {
-  if (!move(DIR.DOWN, piece)) {
+  if (!move(DIR.DOWN, piece, sId)) {
     // Make sure it cannot move because hitting the ground
     if (hitTheGround(piece.type, piece.x, piece.y + 1, piece.dir)) {
       dropPiece(piece);
