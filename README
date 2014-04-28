@@ -1,0 +1,26 @@
+##Communication protocol:
+
+# Client:
+
+* Receive `sid` upon connection.
+* Send user input to server through `userAction` channel.
+* Receive data from server through `tick` channel. The data is in the form:
+
+    {
+      blocks: [ny][nx],
+      currentPieces: {
+        sid: {
+          x: int,
+          y: int,
+          color: {}
+        },
+      ]
+    }
+
+* Render the game.
+
+# Server:
+
+* Accept client connection and assign `sids`.
+* Handle game logic.
+* Broadcast game state in every frame.
