@@ -1,20 +1,3 @@
-var socket = io.connect('http://localhost:8080');
-window.userPieces = {};
-
-socket.on('connectionAck', function(data) {
-  window.sId = data.sId;
-  window.color = data.color;
-  window.blocks = data.blocks;
-  window.current = data.current;
-
-  // Run the game
-  run();
-});
-
-socket.on('otherPlayerPieceChanged', function(data) {
-  _.extend(window.userPieces, data);
-});
-
 //-------------------------------------------------------------------------
 // game constants
 //-------------------------------------------------------------------------
@@ -35,12 +18,28 @@ var KEY     = { ESC: 27, SPACE: 32, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40 },
 var dx, dy,        // pixel size of a single tetris block
     blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
     actions,       // queue of user actions (inputs)
-    playing = true,       // true|false - game is in progress
+    playing,       // true|false - game is in progress
     dt,            // time since starting this game
-    current,       // the current piece
+    currentPieces, // the list of current pieces of all players
     next,          // the next piece
     rows,          // number of completed rows in the current game
     step;          // how long before current piece drops by 1 row
+
+//-------------------------------------------------------------------------
+// server communication
+//-------------------------------------------------------------------------
+
+var socket = io.connect('http://localhost:8080');
+var sId;
+
+socket.on('connectionAck', function(data) {
+  sId = data.sId;
+  blocks = data.blocks;
+  currentPieces = data.currentPieces;
+
+  // Run the game
+  run();
+});
 
 //-------------------------------------------------------------------------
 // tetris pieces
@@ -84,6 +83,7 @@ function eachblock(type, x, y, dir, fn) {
 };
 
 function run() {
+  playing = true;
   addEvents(); // attach keydown and resize events
   invalidate();
   resize();
@@ -91,7 +91,8 @@ function run() {
 
   socket.on('tick', function(data) {
     blocks = data.blocks;
-    current = data.current;
+    currentPieces = data.currentPieces;
+    // TODO: Add a distinct color for the user's piece.
     invalidate();
     draw();
   });
@@ -154,34 +155,27 @@ function draw() {
 };
 
 function drawCourt() {
-  var tempPiece;
   var x, y, block;
 
   if (invalid.court) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (playing) {
-      drawPiece(ctx, current.type, current.x, current.y, current.dir);
-
-      // Draw other players' pieces
-      // for (var key in window.userPieces) {
-      //   if (key !== window.sId) {
-      //     var piece = window.userPieces[key];
-      //     if (piece) {
-      //       drawPiece(ctx, piece.type, piece.x, piece.y, piece.dir);
-      //     }
-      //   }
-      // }
+      // Draw all players' pieces
+      for (var sid in currentPieces) {
+        if (currentPieces.hasOwnProperty(sid)) {
+          var piece = currentPieces[sid];
+          drawPiece(ctx, piece.type, piece.x, piece.y, piece.dir);
+        }
+      }
     }
-    // var currentLine = lines[0];
 
     for(y = 0 ; y < ny ; y++) {
       for (x = 0 ; x < nx ; x++) {
         if (block = getBlock(x, y))
           drawBlock(ctx, x, y, 'red');
       }
-
-      // currentLine = currentLine.nextLine();
     }
+
     ctx.strokeRect(0, 0, nx*dx - 1, ny*dy - 1); // court boundary
     invalid.court = false;
   }
