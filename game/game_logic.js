@@ -1,8 +1,6 @@
 (function(exports) {
   exports.GameLogic = function() {
     var _this = this;
-    // game hooks
-    this.onLose = function() { return this; };
 
     //-------------------------------------------------------------------------
     // game constants
@@ -122,7 +120,7 @@
     };
 
     /**
-     * Check if a squre is occuied by a player's piece.
+     * Check if a square is occuied by a player's piece.
      */
     function occupiedPlayerBlock(x, y, pid) {
       var result = false;
@@ -143,6 +141,20 @@
 
       return result;
     };
+
+    /**
+     * If the top row has at least one block in it,
+     * the game is lost.
+     */
+    function isLost() {
+      for (var x = 0; x < nx; x ++) {
+        if (getBlock(x, 0)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
 
     function hitTheGround(type, x, y, dir) {
       var result = false;
@@ -346,9 +358,9 @@
           dropPiece(piece);
           removeLines();
           clearActions(piece.pid);
+          var tempPiece = setRandomPiece(piece.pid);
 
-          var newPiece = setRandomPiece(piece.pid);
-          if (occupied(newPiece, newPiece.x, newPiece.y, newPiece.dir)) {
+          if (isLost() || occupied(tempPiece, tempPiece.x, tempPiece.y, tempPiece.dir)) {
             lose();
           }
         }
@@ -395,6 +407,9 @@
           setBlock(x, y, (y == 0) ? null : getBlock(x, y-1));
       }
     };
+
+    // game hooks
+    this.onLose = function() { return this; };
 
     // public declaration
     this.speed = speed;
