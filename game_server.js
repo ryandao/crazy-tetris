@@ -1,5 +1,4 @@
 var http = require('http');
-var _ = require('underscore');
 var io = require('socket.io').listen(http.createServer().listen(8080));
 var MAX_CLIENTS = 10; // quality control
 var colors = ['cyan', 'blue', 'orange', 'green', 'purple', 'red', 'yellow'];
@@ -10,9 +9,8 @@ io.sockets.on('connection', function (socket) {
   var sId = socket.id;
   gameLogic.setRandomPiece(sId);
 
-  // Let the client know its sid, and the current game state.
-  // TODO: No need to push game state.
-  socket.emit('connectionAck', _.extend({ sId: sId }, gameLogic.getGameState()));
+  // Let the client know its sid.
+  socket.emit('connectionAck', { sId: sId });
 
   // Handle user action
   socket.on('userAction', function(action) {
@@ -21,9 +19,14 @@ io.sockets.on('connection', function (socket) {
 });
 
 function run() {
+  gameLogic.onLose = function() {
+    io.sockets.emit('lose', null);
+    clearInterval(interval);
+  };
+
   gameLogic.play();
   tick(); // start the first frame
-  setInterval(tick, 1000 / fps);
+  var interval = setInterval(tick, 1000 / fps);
 };
 
 function tick() {

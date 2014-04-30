@@ -21,6 +21,10 @@
       renderer.setCurrentPieces(data.currentPieces);
       renderer.drawFrame();
     });
+
+    socket.on('lose', function() {
+      alert('You lose!');
+    });
   };
 
   function addEvents() {

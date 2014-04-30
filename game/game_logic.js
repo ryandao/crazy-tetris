@@ -1,5 +1,9 @@
 (function(exports) {
   exports.GameLogic = function() {
+    var _this = this;
+    // game hooks
+    this.onLose = function() { return this; };
+
     //-------------------------------------------------------------------------
     // game constants
     //-------------------------------------------------------------------------
@@ -62,13 +66,14 @@
       actions = actions ? actions : {};
       actions[pid] = actions[pid] ? actions[pid] : [];
       actions[pid].push(action);
-    }
+    };
 
     /**
      * Do the bit manipulation and iterate through each
      * occupied block (x,y) for a given piece
      */
     function eachblock(type, x, y, dir, fn) {
+      console.log(type);
       var bit, result, row = 0, col = 0, blocks = type.blocks[dir];
       for(bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
         if (blocks & bit) {
@@ -85,11 +90,11 @@
     /**
      * Check if a piece can fit into a position in the grid
      */
-    function occupied(type, x, y, dir) {
+    function occupied(piece, x, y, dir) {
       var result = false;
-
-      eachblock(type, x, y, dir, function(x, y) {
-        if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) || getBlock(x,y)) {
+      eachblock(piece.type, x, y, dir, function(x, y) {
+        if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) ||
+             getBlock(x,y) || occupiedPlayerBlock(x, y, piece.pid)) {
           result = true;
         }
       });
@@ -97,32 +102,47 @@
       return result;
     };
 
-    function unoccupied(type, x, y, dir) {
-      return !occupied(type, x, y, dir);
+    function unoccupied(piece, x, y, dir) {
+      return !occupied(piece, x, y, dir);
     };
 
-    // TODO: Clean up this mess.
-    function occupiedPlayerBlock(type, x, y, dir, pid) {
+    /**
+     * Check if a piece is occupied by another player's piece.
+     */
+    function occupiedPlayerPiece(piece) {
       var result = false;
 
-      eachblock(type, x, y, dir, function(x, y) {
-        for (var ppid in currentPieces) {
-          if (currentPieces.hasOwnProperty(ppid) && ppid !== pid) {
-            var piece = currentPieces[ppid];
-
-            eachblock(piece.type, piece.x, piece.y, piece.dir, function(px, py) {
-              if (px === x && py === y) {
-                result = true;
-              }
-            });
-
-            if (result) { break; }
-          }
+      eachblock(piece.type, piece.x, piece.y, piece.dir, function(x, y) {
+        if (occupiedPlayerBlock(x, y, piece.pid)) {
+          result = true;
         }
       });
 
       return result;
-    }
+    };
+
+    /**
+     * Check if a squre is occuied by a player's piece.
+     */
+    function occupiedPlayerBlock(x, y, pid) {
+      var result = false;
+
+      for (var _pid in currentPieces) {
+        if (currentPieces.hasOwnProperty(_pid) && _pid !== pid) {
+          var piece = currentPieces[_pid];
+
+          eachblock(piece.type, piece.x, piece.y, piece.dir, function(_x, _y) {
+            if (_x === x && _y === y) {
+              result = true;
+            }
+          });
+
+          if (result) { break; }
+        }
+      }
+
+      return result;
+    };
 
     function hitTheGround(type, x, y, dir) {
       var result = false;
@@ -133,7 +153,7 @@
       });
 
       return result;
-    }
+    };
 
     function random(min, max) {
       return (min + (Math.random() * (max - min)));
@@ -147,26 +167,53 @@
      * pick randomly until the bag is empty.
      *
      * Each piece has a pid to identity it in the list of players' pieces.
+     * No two pieces should overlap each other.
      */
     function randomPiece(pid) {
       if (pieces.length == 0) {
         pieces = [i,i,i,i,j,j,j,j,l,l,l,l,o,o,o,o,s,s,s,s,t,t,t,t,z,z,z,z];
       }
 
-      var type = pieces.splice(random(0, pieces.length-1), 1)[0]
-      return {
-        type: type,
-        dir: DIR.UP,
-        x: Math.round(random(0, nx - type.size)),
-        y: 0,
-        pid: pid
+      var type = pieces.splice(random(0, pieces.length-1), 1)[0];
+      var x = Math.round(random(0, nx - type.size));
+      // variables for overlapping check.
+      var left = x;
+      var right = x;
+      var turn = 0;
+
+      var generatePiece = function(_x) {
+        return { type: type, dir: DIR.UP, x: _x, y: 0, pid: pid };
       };
+
+      // Make sure the piece doesn't overlap with any other piece.
+      // If overlap, try to figure out a nearby position to put it in.
+      var piece = generatePiece(x);
+      while (occupiedPlayerPiece(piece)) {
+        if (turn === 0 && left >= 0) {
+          left --;
+          piece = generatePiece(left);
+          turn = 1;
+        } else if (turn === 1 && right < nx - type.size) {
+          right ++;
+          piece = generatePiece(right);
+          turn = 0;
+        } else {
+          // If no position is overlap-free, just leave it that way
+          // and let the players resolve in the next frame.
+          piece = generatePiece(x);
+          break;
+        }
+      }
+
+      return piece;
     };
 
     function setRandomPiece(pid) {
+      var newPiece = randomPiece(pid);
       currentPieces = currentPieces ? currentPieces : {};
-      currentPieces[pid] = randomPiece(pid);
-    }
+      currentPieces[pid] = newPiece;
+      return newPiece;
+    };
 
     //-------------------------------------------------------------------------
     // GAME LOGIC
@@ -180,6 +227,7 @@
     function lose() {
       console.log('lose');
       playing = false;
+      _this.onLose();
     };
 
     function clearRows() {
@@ -270,8 +318,7 @@
         case DIR.DOWN:  y = y + 1; break;
       }
 
-      if (unoccupied(piece.type, x, y, piece.dir) &&
-          ! occupiedPlayerBlock(piece.type, x, y, piece.dir, piece.pid)) {
+      if (unoccupied(piece, x, y, piece.dir)) {
         piece.x = x;
         piece.y = y;
 
@@ -287,8 +334,7 @@
 
     function rotate(piece) {
       var newdir = (piece.dir == DIR.MAX ? DIR.MIN : piece.dir + 1);
-      if (unoccupied(piece.type, piece.x, piece.y, newdir) &&
-          ! occupiedPlayerBlock(piece.type, piece.x, piece.y, newdir, piece.pid)) {
+      if (unoccupied(piece, piece.x, piece.y, newdir)) {
         piece.dir = newdir;
       }
     };
@@ -299,11 +345,12 @@
         if (hitTheGround(piece.type, piece.x, piece.y + 1, piece.dir)) {
           dropPiece(piece);
           removeLines();
-          setRandomPiece(piece.pid);
           clearActions(piece.pid);
-          // if (occupied(piece.type, piece.x, piece.y, piece.dir)) {
-          //   lose();
-          // }
+
+          var newPiece = setRandomPiece(piece.pid);
+          if (occupied(newPiece, newPiece.x, newPiece.y, newPiece.dir)) {
+            lose();
+          }
         }
       }
     };
