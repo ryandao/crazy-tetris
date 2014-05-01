@@ -8,11 +8,13 @@
 
   socket.on('connectionAck', function(data) {
     sId = data.sId;
+    renderer.setPid(sId);
     run();
   });
 
   function run() {
     addEvents(); // attach keydown and resize events
+    renderer.setPlaying(true);
     renderer.resize();
     renderer.drawFrame();
 
@@ -23,6 +25,7 @@
     });
 
     socket.on('lose', function() {
+      renderer.setPlaying(false);
       alert('You lose!');
     });
   };

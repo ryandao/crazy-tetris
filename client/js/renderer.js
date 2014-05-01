@@ -4,9 +4,13 @@
     // game constants
     //-------------------------------------------------------------------------
 
-    var nx      = 20, // width of tetris court (in blocks)
-        ny      = 20, // height of tetris court (in blocks)
-        ctx     = canvas.getContext('2d');
+    var nx = 20, // width of tetris court (in blocks)
+        ny = 20, // height of tetris court (in blocks)
+        ctx = canvas.getContext('2d'),
+        myColor = 'green',
+        allyColor = 'yellow',
+        foeColor = 'red',
+        blockColor = 'gray';
 
     //-------------------------------------------------------------------------
     // game variables (initialized during reset)
@@ -21,7 +25,8 @@
         currentPieces, // the list of current pieces of all players
         next,          // the next piece
         rows,          // number of completed rows in the current game
-        step;          // how long before current piece drops by 1 row
+        step,          // how long before current piece drops by 1 row
+        pid;           // the pid of the player's piece
 
     //-------------------------------------------------------------------------
     // tetris pieces
@@ -39,13 +44,13 @@
     //
     //-------------------------------------------------------------------------
 
-    var i = { id: 'i', size: 4, blocks: [0x0F00, 0x2222, 0x00F0, 0x4444], color: 'cyan'   };
-    var j = { id: 'j', size: 3, blocks: [0x44C0, 0x8E00, 0x6440, 0x0E20], color: 'blue'   };
-    var l = { id: 'l', size: 3, blocks: [0x4460, 0x0E80, 0xC440, 0x2E00], color: 'orange' };
-    var o = { id: 'o', size: 2, blocks: [0xCC00, 0xCC00, 0xCC00, 0xCC00], color: 'yellow' };
-    var s = { id: 's', size: 3, blocks: [0x06C0, 0x8C40, 0x6C00, 0x4620], color: 'green'  };
-    var t = { id: 't', size: 3, blocks: [0x0E40, 0x4C40, 0x4E00, 0x4640], color: 'purple' };
-    var z = { id: 'z', size: 3, blocks: [0x0C60, 0x4C80, 0xC600, 0x2640], color: 'red'    };
+    var i = { id: 'i', size: 4, blocks: [0x0F00, 0x2222, 0x00F0, 0x4444] };
+    var j = { id: 'j', size: 3, blocks: [0x44C0, 0x8E00, 0x6440, 0x0E20] };
+    var l = { id: 'l', size: 3, blocks: [0x4460, 0x0E80, 0xC440, 0x2E00] };
+    var o = { id: 'o', size: 2, blocks: [0xCC00, 0xCC00, 0xCC00, 0xCC00] };
+    var s = { id: 's', size: 3, blocks: [0x06C0, 0x8C40, 0x6C00, 0x4620] };
+    var t = { id: 't', size: 3, blocks: [0x0E40, 0x4C40, 0x4E00, 0x4640] };
+    var z = { id: 'z', size: 3, blocks: [0x0C60, 0x4C80, 0xC600, 0x2640] };
 
     //------------------------------------------------
     // do the bit manipulation and iterate through each
@@ -64,6 +69,10 @@
       }
     };
 
+    function setPid(_pid) {
+      pid = _pid;
+    }
+
     function setBlocks(_blocks) {
       blocks = _blocks;
     };
@@ -71,6 +80,10 @@
     function setCurrentPieces(_currentPiences) {
       currentPieces = _currentPiences;
     };
+
+    function setPlaying(_playing) {
+      playing = _playing;
+    }
 
     function resize() {
       canvas.width   = canvas.clientWidth;  // set canvas logical size equal to its physical size
@@ -117,10 +130,17 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (playing) {
           // Draw all players' pieces
-          for (var sid in currentPieces) {
-            if (currentPieces.hasOwnProperty(sid)) {
-              var piece = currentPieces[sid];
-              drawPiece(ctx, piece.type, piece.x, piece.y, piece.dir);
+          for (var _pid in currentPieces) {
+            if (currentPieces.hasOwnProperty(_pid)) {
+              var piece = currentPieces[_pid];
+              var color;
+              if (_pid === pid) {
+                color = myColor;
+              } else {
+                color = allyColor;
+              }
+
+              drawPiece(ctx, piece.type, piece.x, piece.y, piece.dir, color);
             }
           }
         }
@@ -128,7 +148,7 @@
         for(y = 0 ; y < ny ; y++) {
           for (x = 0 ; x < nx ; x++) {
             if (block = getBlock(x, y))
-              drawBlock(ctx, x, y, 'red');
+              drawBlock(ctx, x, y, blockColor);
           }
         }
 
@@ -137,9 +157,9 @@
       }
     };
 
-    function drawPiece(ctx, type, x, y, dir) {
+    function drawPiece(ctx, type, x, y, dir, color) {
       eachblock(type, x, y, dir, function(x, y) {
-        drawBlock(ctx, x, y, type.color);
+        drawBlock(ctx, x, y, color);
       });
     };
 
@@ -150,8 +170,10 @@
     };
 
     // public declaration
+    this.setPid = setPid;
     this.setBlocks = setBlocks;
     this.setCurrentPieces = setCurrentPieces;
+    this.setPlaying = setPlaying;
     this.ctx = ctx;
     this.drawFrame = drawFrame;
     this.resize = resize;
