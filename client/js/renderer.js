@@ -7,10 +7,10 @@
     var nx = 20, // width of tetris court (in blocks)
         ny = 20, // height of tetris court (in blocks)
         ctx = canvas.getContext('2d'),
-        myColor = 'green',
-        allyColor = 'yellow',
-        foeColor = 'red',
-        blockColor = 'gray';
+        MY_COLOR = 'green',
+        ALLY_COLOR = 'yellow',
+        FOE_COLOR = 'red',
+        BLOCK_COLOR = 'gray';
 
     //-------------------------------------------------------------------------
     // game variables (initialized during reset)
@@ -130,17 +130,9 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (playing) {
           // Draw all players' pieces
-          for (var _pid in currentPieces) {
-            if (currentPieces.hasOwnProperty(_pid)) {
-              var piece = currentPieces[_pid];
-              var color;
-              if (_pid === pid) {
-                color = myColor;
-              } else {
-                color = allyColor;
-              }
-
-              drawPiece(ctx, piece.type, piece.x, piece.y, piece.dir, color);
+          for (var pid in currentPieces) {
+            if (currentPieces.hasOwnProperty(pid)) {
+              drawPiece(ctx, currentPieces[pid]);
             }
           }
         }
@@ -148,7 +140,7 @@
         for(y = 0 ; y < ny ; y++) {
           for (x = 0 ; x < nx ; x++) {
             if (block = getBlock(x, y))
-              drawBlock(ctx, x, y, blockColor);
+              drawBlock(ctx, x, y, BLOCK_COLOR);
           }
         }
 
@@ -157,8 +149,19 @@
       }
     };
 
-    function drawPiece(ctx, type, x, y, dir, color) {
-      eachblock(type, x, y, dir, function(x, y) {
+    function drawPiece(ctx, piece) {
+      var color;
+      if (piece.pid === pid) {
+        color = MY_COLOR;
+      } else {
+        if (piece.playerType === currentPieces[pid].playerType) {
+          color = ALLY_COLOR;
+        } else {
+          color = FOE_COLOR;
+        }
+      }
+
+      eachblock(piece.type, piece.x, piece.y, piece.dir, function(x, y) {
         drawBlock(ctx, x, y, color);
       });
     };

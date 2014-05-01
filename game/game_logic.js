@@ -9,7 +9,8 @@
     var speed   = { start: 600, decrement: 50, min: 100 }, // how long before piece drops by 1 row (milliseconds)
         nx      = 20, // width of tetris court (in blocks)
         ny      = 20, // height of tetris court (in blocks)
-        DIR     = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
+        DIR     = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 },
+        PLAYER  = { BUILDER: 0, DESTROYER: 1 };
 
     //-------------------------------------------------------------------------
     // game variables (initialized during reset)
@@ -220,8 +221,9 @@
       return piece;
     };
 
-    function setRandomPiece(pid) {
+    function setRandomPiece(pid, playerType) {
       var newPiece = randomPiece(pid);
+      newPiece.playerType = playerType || PLAYER.BUILDER;
       currentPieces = currentPieces ? currentPieces : {};
       currentPieces[pid] = newPiece;
       return newPiece;
@@ -279,7 +281,7 @@
     function resetCurrentPieces() {
       for (var pid in currentPieces) {
         if (currentPieces.hasOwnProperty(pid)) {
-          setRandomPiece(pid);
+          setRandomPiece(pid, currentPieces[pid].playerType);
         }
       }
     }
@@ -358,7 +360,7 @@
           dropPiece(piece);
           removeLines();
           clearActions(piece.pid);
-          var tempPiece = setRandomPiece(piece.pid);
+          var tempPiece = setRandomPiece(piece.pid, piece.playerType);
 
           if (isLost() || occupied(tempPiece, tempPiece.x, tempPiece.y, tempPiece.dir)) {
             lose();
@@ -412,6 +414,7 @@
     this.onLose = function() { return this; };
 
     // public declaration
+    this.PLAYER = PLAYER;
     this.speed = speed;
     this.nx = nx; this.ny = ny;
     this.actions = actions;

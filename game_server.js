@@ -4,10 +4,14 @@ var MAX_CLIENTS = 10; // quality control
 var colors = ['cyan', 'blue', 'orange', 'green', 'purple', 'red', 'yellow'];
 var gameLogic = new (require('./game/game_logic').GameLogic)();
 var fps = 60;
+var clientCount = 0;
 
 io.sockets.on('connection', function (socket) {
+  clientCount ++;
+  var playerType = (clientCount % 2 === 0) ? gameLogic.PLAYER.BUILDER : gameLogic.PLAYER.DESTROYER;
+  console.log(playerType);
   var sId = socket.id;
-  gameLogic.setRandomPiece(sId);
+  gameLogic.setRandomPiece(sId, playerType);
 
   // Let the client know its sid.
   socket.emit('connectionAck', { sId: sId });
