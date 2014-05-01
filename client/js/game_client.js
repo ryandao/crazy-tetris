@@ -3,13 +3,29 @@
   var DIR = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
   var renderer = new Renderer(document.getElementById('canvas'));
   window.renderer = renderer;
-  var socket = io.connect('http://localhost:8080');
-  var sId;
 
+  var socket = io.connect('http://localhost:8080');
+  var connected = false;
   socket.on('connectionAck', function(data) {
-    sId = data.sId;
-    renderer.setPid(sId);
+    renderer.setPid(data.sId);
+    connected = true;
+  });
+
+  socket.on('disconnect', function() {
+    connected = false;
+  });
+
+  socket.on('playACK', function() {
     run();
+  });
+
+  document.getElementById('play-btn').addEventListener('click', function() {
+    if (connected) {
+      var playerType = document.getElementById('player-select').value;
+      socket.emit('play', playerType);
+    } else {
+      alert("Connection to game server was unsuccessful.");
+    }
   });
 
   function run() {
