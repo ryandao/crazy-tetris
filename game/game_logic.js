@@ -226,6 +226,10 @@
       newPiece.playerType = playerType || PLAYER.BUILDER;
       currentPieces = currentPieces ? currentPieces : {};
       currentPieces[pid] = newPiece;
+
+      // Call the listeners to the piece.
+      // TODO: Create a separate Player object to control pieces of the same pid.
+      _this.pieceAddedListeners[pid].call(null, newPiece);
       return newPiece;
     };
 
@@ -412,6 +416,7 @@
 
     // game hooks
     this.onLose = function() { return this; };
+    this.pieceAddedListeners = {};
 
     // public declaration
     this.PLAYER = PLAYER;

@@ -14,9 +14,12 @@ io.sockets.on('connection', function (socket) {
 
   // Start the game for the client.
   socket.on('play', function(playerType) {
+    gameLogic.pieceAddedListeners[sId] = function(piece) {
+      var destroyerAI = new DestroyerAI(gameLogic, piece);
+      destroyerAI.run();
+    };
+
     gameLogic.setRandomPiece(sId, playerType);
-    var destroyerAI = new DestroyerAI(gameLogic, sId);
-    destroyerAI.run();
     socket.emit('playACK');
   });
 

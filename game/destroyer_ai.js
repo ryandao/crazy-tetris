@@ -1,11 +1,11 @@
 (function() {
-  exports.DestroyerAI = function(gameLogic, pid) {
+  exports.DestroyerAI = function(gameLogic, piece) {
     var DIR = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
 
     var run = function() {
       var actions = getActions();
       for (var i = 0; i < actions.length; i++) {
-        gameLogic.addAction(actions[i], pid);
+        gameLogic.addAction(actions[i], piece.pid);
       }
     };
 
