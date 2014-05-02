@@ -2,6 +2,7 @@ var http = require('http');
 var io = require('socket.io').listen(http.createServer().listen(8080));
 var MAX_CLIENTS = 10; // quality control
 var colors = ['cyan', 'blue', 'orange', 'green', 'purple', 'red', 'yellow'];
+var DestroyerAI = require('./game/destroyer_ai').DestroyerAI;
 var gameLogic = new (require('./game/game_logic').GameLogic)();
 var fps = 60;
 
@@ -14,6 +15,8 @@ io.sockets.on('connection', function (socket) {
   // Start the game for the client.
   socket.on('play', function(playerType) {
     gameLogic.setRandomPiece(sId, playerType);
+    var destroyerAI = new DestroyerAI(gameLogic, sId);
+    destroyerAI.run();
     socket.emit('playACK');
   });
 

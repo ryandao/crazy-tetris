@@ -1,4 +1,4 @@
-(function(exports) {
+(function() {
   exports.GameLogic = function() {
     var _this = this;
 
@@ -424,4 +424,4 @@
     this.play = play;
     this.update = update;
   };
-})(typeof exports === 'undefined' ? this['game_logic'] = {} : exports);
+})();
