@@ -9,8 +9,7 @@
     var speed   = { start: 600, decrement: 50, min: 100 }, // how long before piece drops by 1 row (milliseconds)
         nx      = 20, // width of tetris court (in blocks)
         ny      = 20, // height of tetris court (in blocks)
-        DIR     = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 },
-        PLAYER  = { BUILDER: 0, DESTROYER: 1 };
+        DIR     = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
 
     //-------------------------------------------------------------------------
     // game variables (initialized during reset)
@@ -18,12 +17,12 @@
 
     var dx, dy,        // pixel size of a single tetris block
         blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
-        actions,       // queue of user actions (inputs)
         playing,       // true|false - game is in progress
         dt,            // time since starting this game
         next,          // the next piece
         rows,          // number of completed rows in the current game
         step,          // how long before current piece drops by 1 row
+        players,       // list of players
         currentPieces; // a list of the players' pieces
 
     //-------------------------------------------------------------------------
@@ -61,10 +60,23 @@
       }
     };
 
-    function addAction(action, pid) {
-      actions = actions ? actions : {};
-      actions[pid] = actions[pid] ? actions[pid] : [];
-      actions[pid].push(action);
+    function addPlayer(player) {
+      players = players ? players : [];
+      players.push(player);
+
+      if (! player.getPiece()) {
+        setRandomPiece(player);
+      }
+    };
+
+    function getPlayerById(id) {
+      for (var i = 0; i < players.length; i++) {
+        if (players[i].id === id) {
+          return players[i];
+        }
+      }
+
+      return null;
     };
 
     /**
@@ -72,7 +84,6 @@
      * occupied block (x,y) for a given piece
      */
     function eachblock(type, x, y, dir, fn) {
-      console.log(type);
       var bit, result, row = 0, col = 0, blocks = type.blocks[dir];
       for(bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
         if (blocks & bit) {
@@ -221,15 +232,12 @@
       return piece;
     };
 
-    function setRandomPiece(pid, playerType) {
-      var newPiece = randomPiece(pid);
-      newPiece.playerType = playerType || PLAYER.BUILDER;
+    function setRandomPiece(player) {
+      var newPiece = randomPiece(player.id);
+      newPiece.playerType = player.playerType;
       currentPieces = currentPieces ? currentPieces : {};
-      currentPieces[pid] = newPiece;
-
-      // Call the listeners to the piece.
-      // TODO: Create a separate Player object to control pieces of the same pid.
-      _this.pieceAddedListeners[pid].call(null, newPiece);
+      currentPieces[player.id] = newPiece;
+      player.setPiece(newPiece);
       return newPiece;
     };
 
@@ -274,23 +282,26 @@
       blocks = [];
     };
 
-    function clearActions(pid) {
-      if (pid) {
-        actions[pid] = [];
+    function clearActions(player) {
+      if (player) {
+        player.clearActions();
       } else {
-        actions = {};
+        for (var i = 0; i < players.length; i++) {
+          players[i].clearActions();
+        }
       }
     };
 
     function resetCurrentPieces() {
       for (var pid in currentPieces) {
         if (currentPieces.hasOwnProperty(pid)) {
-          setRandomPiece(pid, currentPieces[pid].playerType);
+          setRandomPiece(getPlayerById(pid));
         }
       }
     }
 
     function reset() {
+      players = [];
       dt = 0;
       step = speed.start;
       clearActions();
@@ -311,10 +322,10 @@
     };
 
     function handleActions() {
-      for (var pid in actions) {
-        if (actions.hasOwnProperty(pid)) {
-          handle(actions[pid].shift(), currentPieces[pid]);
-        }
+      for (var i = 0; i < players.length; i++) {
+        var player = players[i];
+        console.log(player.getActions());
+        handle(player.getActions().shift(), currentPieces[player.id]);
       }
     };
 
@@ -361,10 +372,11 @@
       if (!move(DIR.DOWN, piece)) {
         // Make sure it cannot move because hitting the ground
         if (hitTheGround(piece.type, piece.x, piece.y + 1, piece.dir)) {
+          var player = getPlayerById(piece.pid);
           dropPiece(piece);
           removeLines();
-          clearActions(piece.pid);
-          var tempPiece = setRandomPiece(piece.pid, piece.playerType);
+          clearActions(player);
+          var tempPiece = setRandomPiece(player);
 
           if (isLost() || occupied(tempPiece, tempPiece.x, tempPiece.y, tempPiece.dir)) {
             lose();
@@ -416,15 +428,12 @@
 
     // game hooks
     this.onLose = function() { return this; };
-    this.pieceAddedListeners = {};
 
     // public declaration
-    this.PLAYER = PLAYER;
     this.speed = speed;
     this.nx = nx; this.ny = ny;
-    this.actions = actions;
+    this.addPlayer = addPlayer;
     this.getGameState = getGameState;
-    this.addAction = addAction;
     this.setRandomPiece = setRandomPiece;
     this.play = play;
     this.update = update;
