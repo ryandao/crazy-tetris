@@ -16,7 +16,7 @@ io.sockets.on('connection', function (socket) {
 
   // Start the game for the client.
   socket.on('play', function(playerType) {
-    player = new DestroyerAI(gameLogic, sId, playerType);
+    player = new Player(gameLogic, sId, playerType);
     gameLogic.addPlayer(player);
     socket.emit('playACK');
   });

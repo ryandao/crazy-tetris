@@ -36,7 +36,7 @@
 
     socket.on('tick', function(data) {
       renderer.setBlocks(data.blocks);
-      renderer.setCurrentPieces(data.currentPieces);
+      renderer.setPlayerPieces(data.playerPieces);
       renderer.drawFrame();
     });
 

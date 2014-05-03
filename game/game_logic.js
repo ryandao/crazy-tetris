@@ -22,8 +22,7 @@
         next,          // the next piece
         rows,          // number of completed rows in the current game
         step,          // how long before current piece drops by 1 row
-        players,       // list of players
-        currentPieces; // a list of the players' pieces
+        players;       // list of players
 
     //-------------------------------------------------------------------------
     // tetris pieces
@@ -54,9 +53,15 @@
     //-------------------------------------------------------------------------
 
     function getGameState() {
+      var playerPieces = {};
+      for (var i = 0 ; i < players.length; i++) {
+        var player = players[i];
+        playerPieces[player.id] = player.getPiece();
+      }
+
       return {
         blocks: blocks,
-        currentPieces: currentPieces
+        playerPieces: playerPieces
       }
     };
 
@@ -137,10 +142,10 @@
     function occupiedPlayerBlock(x, y, pid) {
       var result = false;
 
-      for (var _pid in currentPieces) {
-        if (currentPieces.hasOwnProperty(_pid) && _pid !== pid) {
-          var piece = currentPieces[_pid];
-
+      for (var i = 0; i < players.length; i++) {
+        var player = players[i];
+        if (player.id !== pid) {
+          var piece = player.getPiece();
           eachblock(piece.type, piece.x, piece.y, piece.dir, function(_x, _y) {
             if (_x === x && _y === y) {
               result = true;
@@ -235,8 +240,6 @@
     function setRandomPiece(player) {
       var newPiece = randomPiece(player.id);
       newPiece.playerType = player.playerType;
-      currentPieces = currentPieces ? currentPieces : {};
-      currentPieces[player.id] = newPiece;
       player.setPiece(newPiece);
       return newPiece;
     };
@@ -292,11 +295,9 @@
       }
     };
 
-    function resetCurrentPieces() {
-      for (var pid in currentPieces) {
-        if (currentPieces.hasOwnProperty(pid)) {
-          setRandomPiece(getPlayerById(pid));
-        }
+    function resetPlayerPieces() {
+      for (var i = 0; i < players.length; i++) {
+        setRandomPiece(players[i]);
       }
     }
 
@@ -307,7 +308,7 @@
       clearActions();
       clearBlocks();
       clearRows();
-      resetCurrentPieces();
+      resetPlayerPieces();
     };
 
     function update(idt) {
@@ -324,8 +325,7 @@
     function handleActions() {
       for (var i = 0; i < players.length; i++) {
         var player = players[i];
-        console.log(player.getActions());
-        handle(player.getActions().shift(), currentPieces[player.id]);
+        handle(player.getActions().shift(), player.getPiece());
       }
     };
 
@@ -386,10 +386,8 @@
     };
 
     function dropAll() {
-      for (var pid in currentPieces) {
-        if (currentPieces.hasOwnProperty(pid)) {
-          drop(currentPieces[pid]);
-        }
+      for (var i = 0; i < players.length; i++) {
+        drop(players[i].getPiece());
       }
     }
 

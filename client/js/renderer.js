@@ -22,7 +22,7 @@
         actions,       // queue of user actions (inputs)
         playing= true, // true|false - game is in progress
         dt,            // time since starting this game
-        currentPieces, // the list of current pieces of all players
+        playerPieces,  // the list of current pieces of all players
         next,          // the next piece
         rows,          // number of completed rows in the current game
         step,          // how long before current piece drops by 1 row
@@ -77,8 +77,8 @@
       blocks = _blocks;
     };
 
-    function setCurrentPieces(_currentPiences) {
-      currentPieces = _currentPiences;
+    function setPlayerPieces(_playerPiece) {
+      playerPieces =  _playerPiece;
     };
 
     function setPlaying(_playing) {
@@ -130,9 +130,9 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (playing) {
           // Draw all players' pieces
-          for (var pid in currentPieces) {
-            if (currentPieces.hasOwnProperty(pid)) {
-              drawPiece(ctx, currentPieces[pid]);
+          for (var pid in playerPieces)  {
+            if (playerPieces.hasOwnProperty(pid)) {
+              drawPiece(ctx, playerPieces[pid]);
             }
           }
         }
@@ -154,7 +154,7 @@
       if (piece.pid === pid) {
         color = MY_COLOR;
       } else {
-        if (piece.playerType === currentPieces[pid].playerType) {
+        if (piece.playerType === playerPieces[pid].playerType) {
           color = ALLY_COLOR;
         } else {
           color = FOE_COLOR;
@@ -175,7 +175,7 @@
     // public declaration
     this.setPid = setPid;
     this.setBlocks = setBlocks;
-    this.setCurrentPieces = setCurrentPieces;
+    this.setPlayerPieces = setPlayerPieces;
     this.setPlaying = setPlaying;
     this.ctx = ctx;
     this.drawFrame = drawFrame;
