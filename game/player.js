@@ -1,6 +1,7 @@
 (function() {
+  var PLAYER_TYPE = { BUILDER: 0, DESTROYER: 1 };
+
   var Player = function(_gameLogic, _id, _playerType) {
-    var PLAYER_TYPE = { BUILDER: 0, DESTROYER: 1 };
     var id = _id,
         gameLogic = _gameLogic,
         playerType = _playerType ? _playerType : PLAYER_TYPE.BUILDER,
@@ -37,9 +38,9 @@
     this.clearActions = clearActions;
   };
 
-  var DestroyerAI = function(_gameLogic, _piece, _playerType) {
+  var DestroyerAI = function(_gameLogic, _piece) {
     var DIR = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
-    Player.call(this, _gameLogic, _piece, _playerType);
+    Player.call(this, _gameLogic, _piece, PLAYER_TYPE.DESTROYER);
 
     // Override
     this.getActions = function() {
