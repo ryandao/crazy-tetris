@@ -37,28 +37,25 @@
     this.clearActions = clearActions;
   };
 
-  var DestroyerAI = function(gameLogic, piece) {
+  var DestroyerAI = function(_gameLogic, _piece, _playerType) {
     var DIR = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
+    Player.call(this, _gameLogic, _piece, _playerType);
 
-    var run = function() {
-      var actions = getActions();
-      for (var i = 0; i < actions.length; i++) {
-        gameLogic.addAction(actions[i], piece.pid);
-      }
-    };
-
-    var getActions = function() {
+    // Override
+    this.getActions = function() {
       var actions = [];
-      for (var i = 0; i < gameLogic.ny; i++) {
+      for (var i = 0; i < _gameLogic.ny; i++) {
         actions.push(DIR.DOWN);
       }
 
       return actions;
     };
-
-    // Public declaration
-    this.run = run;
   };
+
+  var tmp = function() {};
+  tmp.prototype = Player.prototype;
+  DestroyerAI.prototype = new tmp();
+  DestroyerAI.prototype.constructor = DestroyerAI;
 
   exports.Player = Player;
   exports.DestroyerAI = DestroyerAI;
