@@ -2,24 +2,28 @@ var http = require('http');
 var io = require('socket.io').listen(http.createServer().listen(8080));
 var MAX_CLIENTS = 10; // quality control
 var colors = ['cyan', 'blue', 'orange', 'green', 'purple', 'red', 'yellow'];
+var Player = require('./game/player').Player;
+var DestroyerAI = require('./game/player').DestroyerAI;
 var gameLogic = new (require('./game/game_logic').GameLogic)();
 var fps = 60;
 
 io.sockets.on('connection', function (socket) {
   var sId = socket.id;
+  var player;
 
   // Let the client know its sid.
   socket.emit('connectionAck', { sId: sId });
 
   // Start the game for the client.
   socket.on('play', function(playerType) {
-    gameLogic.setRandomPiece(sId, playerType);
+    player = new Player(gameLogic, sId, playerType);
+    gameLogic.addPlayer(player);
     socket.emit('playACK');
   });
 
   // Handle user action
   socket.on('userAction', function(action) {
-    gameLogic.addAction(action, sId);
+    player.addAction(action);
   });
 });
 
