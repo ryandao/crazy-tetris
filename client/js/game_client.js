@@ -28,19 +28,33 @@
   });
 
   function run() {
+    var playing = true;
+    var dataDirty = false;
+    var actionClean = false;
+
+    var tick = function() {
+      if (playing) {
+        if (dataDirty) {
+          renderer.drawFrame();
+          dataDirty = false;
+        }
+
+        requestAnimationFrame(tick);
+      }
+    };
+
     addEvents(); // attach keydown and resize events
-    renderer.setPlaying(true);
     renderer.resize();
-    renderer.drawFrame();
+    requestAnimationFrame(tick);
 
     socket.on('tick', function(data) {
       renderer.setBlocks(data.blocks);
       renderer.setPlayerPieces(data.playerPieces);
-      renderer.drawFrame();
+      dataDirty = true;
     });
 
     socket.on('lost', function() {
-      renderer.setPlaying(false);
+      playing = false;
       alert('You lose!');
     });
 

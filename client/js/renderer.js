@@ -20,7 +20,6 @@
     var dx, dy,        // pixel size of a single tetris block
         blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
         actions,       // queue of user actions (inputs)
-        playing= true, // true|false - game is in progress
         dt,            // time since starting this game
         playerPieces,  // the list of current pieces of all players
         next,          // the next piece
@@ -81,10 +80,6 @@
       playerPieces =  _playerPiece;
     };
 
-    function setPlaying(_playing) {
-      playing = _playing;
-    }
-
     function resize() {
       canvas.width   = canvas.clientWidth;  // set canvas logical size equal to its physical size
       canvas.height  = canvas.clientHeight; // (ditto)
@@ -128,12 +123,10 @@
 
       if (invalid.court) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (playing) {
-          // Draw all players' pieces
-          for (var pid in playerPieces)  {
-            if (playerPieces.hasOwnProperty(pid)) {
-              drawPiece(ctx, playerPieces[pid]);
-            }
+        // Draw all players' pieces
+        for (var pid in playerPieces)  {
+          if (playerPieces.hasOwnProperty(pid)) {
+            drawPiece(ctx, playerPieces[pid]);
           }
         }
 
@@ -176,7 +169,6 @@
     this.setPid = setPid;
     this.setBlocks = setBlocks;
     this.setPlayerPieces = setPlayerPieces;
-    this.setPlaying = setPlaying;
     this.ctx = ctx;
     this.drawFrame = drawFrame;
     this.resize = resize;
