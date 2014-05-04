@@ -39,10 +39,15 @@
       renderer.drawFrame();
     });
 
-    socket.on('lose', function() {
+    socket.on('lost', function() {
       renderer.setPlaying(false);
       alert('You lose!');
     });
+
+    socket.on('win', function() {
+      renderer.setPlaying(false);
+      alert('You win!');
+    })
   };
 
   function addEvents() {

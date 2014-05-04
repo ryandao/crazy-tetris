@@ -1,3 +1,4 @@
+var PLAYER_TYPE = { BUILDER: 0, DESTROYER: 1 };
 var http = require('http');
 var io = require('socket.io').listen(http.createServer().listen(8080));
 var MAX_CLIENTS = 10; // quality control
@@ -35,7 +36,12 @@ io.sockets.on('connection', function (socket) {
 
 function run() {
   gameLogic.onLose = function() {
-    io.sockets.emit('lose', null);
+    var players = gameLogic.getPlayers();
+    for (var i = 0; i < players.length; i++) {
+      var msg = players[i].playerType === PLAYER_TYPE.BUILDER ? 'lost' : 'win';
+      io.sockets.socket(players[i].id).emit(msg);
+    }
+
     clearInterval(interval);
   };
 
