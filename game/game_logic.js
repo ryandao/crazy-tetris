@@ -74,6 +74,14 @@
       }
     };
 
+    function removePlayer(id) {
+      for (var i = 0; i < players.length; i++) {
+        if (players[i].id === id) {
+          players.splice(i, 1);
+        }
+      }
+    };
+
     function getPlayerById(id) {
       for (var i = 0; i < players.length; i++) {
         if (players[i].id === id) {
@@ -83,6 +91,10 @@
 
       return null;
     };
+
+    function getPlayers() {
+      return players;
+    }
 
     /**
      * Do the bit manipulation and iterate through each
@@ -431,6 +443,8 @@
     this.speed = speed;
     this.nx = nx; this.ny = ny;
     this.addPlayer = addPlayer;
+    this.removePlayer = removePlayer;
+    this.getPlayers = getPlayers;
     this.getGameState = getGameState;
     this.setRandomPiece = setRandomPiece;
     this.play = play;

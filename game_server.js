@@ -16,7 +16,7 @@ io.sockets.on('connection', function (socket) {
 
   // Start the game for the client.
   socket.on('play', function(playerType) {
-    player = new Player(gameLogic, sId, playerType);
+    player = new Player(gameLogic, sId, parseInt(playerType));
     gameLogic.addPlayer(player);
     socket.emit('playACK');
   });
@@ -24,6 +24,12 @@ io.sockets.on('connection', function (socket) {
   // Handle user action
   socket.on('userAction', function(action) {
     player.addAction(action);
+  });
+
+  // If client disconnects, remove the player.
+  socket.on('disconnect', function() {
+    console.log('disconnect');
+    gameLogic.removePlayer(sId);
   });
 });
 
