@@ -23,8 +23,8 @@ io.sockets.on('connection', function (socket) {
   });
 
   // Handle user action
-  socket.on('userAction', function(action) {
-    player.addAction(action);
+  socket.on('userAction', function(actions) {
+    player.addActions(actions);
   });
 
   // If client disconnects, remove the player.

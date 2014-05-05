@@ -16,8 +16,8 @@
       piece = _piece;
     };
 
-    var addAction = function(action) {
-      actions.push(action);
+    var addActions = function(_actions) {
+      actions = actions.concat(_actions);
     };
 
     var getActions = function() {
@@ -34,7 +34,7 @@
     this.playerType = playerType;
     this.getPiece = getPiece;
     this.setPiece = setPiece;
-    this.addAction = addAction;
+    this.addActions = addActions;
     this.clearActions = clearActions;
   };
 

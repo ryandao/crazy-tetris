@@ -5,6 +5,15 @@
   var socket = io.connect('http://localhost:8080');
   var connected = false;
 
+  // Debug logger
+  (function() {
+    var emit = socket.emit;
+    socket.emit = function() {
+      console.log('***','emit', Array.prototype.slice.call(arguments));
+      emit.apply(socket, arguments);
+    };
+  })();
+
   socket.on('connectionAck', function(data) {
     renderer.setPid(data.sId);
     connected = true;
@@ -65,23 +74,57 @@
   };
 
   function addEvents() {
-    document.addEventListener('keydown', keydown, false);
+    addActionListener();
     window.addEventListener('resize', renderer.resize, false);
   };
 
-  function keydown(ev) {
-    switch(ev.keyCode) {
-      case KEY.LEFT:   sendAction(DIR.LEFT); break;
-      case KEY.RIGHT:  sendAction(DIR.RIGHT); break;
-      case KEY.UP:     sendAction(DIR.UP); break;
-      case KEY.DOWN:   sendAction(DIR.DOWN); break;
-      case KEY.ESC:    lose(); break;
-    }
+  function addActionListener() {
+    var actions = [];
+    var addToActions = function(ev) {
+      switch(ev.keyCode) {
+        case KEY.LEFT:   actions.push(DIR.LEFT); break;
+        case KEY.RIGHT:  actions.push(DIR.RIGHT); break;
+        case KEY.UP:     actions.push(DIR.UP); break;
+        case KEY.DOWN:   actions.push(DIR.DOWN); break;
+      }
 
-    ev.preventDefault(); // prevent arrow keys from scrolling the page (supported in IE9+ and all other browsers)
+      ev.preventDefault();
+    };
+
+    // Debounce the action listeners so that consecutive actions
+    // will only be sent once to save bandwidth.
+    // TODO: Add client prediction to make the animation smooth.
+    var keydown = (function() {
+      var timeout;
+      var func = function() {
+        if (actions.length !== 0) {
+          sendAction(actions);
+          actions = [];
+        }
+      }
+
+      return function(ev) {
+        var _this = this;
+        addToActions(ev);
+
+        var later = function() {
+          timeout = null;
+          func.call();
+        }
+
+        var callNow = ! timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, 200);
+        if (callNow) {
+          func.call();
+        }
+      }
+    })();
+
+    document.addEventListener('keydown', keydown, false);
   };
 
-  function sendAction(action) {
-    socket.emit('userAction', action);
+  function sendAction(actions) {
+    socket.emit('userAction', actions);
   };
 })();
