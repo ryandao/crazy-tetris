@@ -114,7 +114,7 @@
 
         var callNow = ! timeout;
         clearTimeout(timeout);
-        timeout = setTimeout(later, 200);
+        timeout = setTimeout(later, 16);
         if (callNow) {
           func.call();
         }
