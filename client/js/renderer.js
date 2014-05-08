@@ -10,7 +10,8 @@
         MY_COLOR = 'green',
         ALLY_COLOR = 'yellow',
         FOE_COLOR = 'red',
-        BLOCK_COLOR = 'gray';
+        BLOCK_COLOR = 'gray',
+        DIR = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
 
     //-------------------------------------------------------------------------
     // game variables (initialized during reset)
@@ -19,9 +20,9 @@
 
     var dx, dy,        // pixel size of a single tetris block
         blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
-        actions,       // queue of user actions (inputs)
         dt,            // time since starting this game
         playerPieces,  // the list of current pieces of all players
+        myPiece,       // the player's piece
         next,          // the next piece
         rows,          // number of completed rows in the current game
         step,          // how long before current piece drops by 1 row
@@ -78,6 +79,7 @@
 
     function setPlayerPieces(_playerPiece) {
       playerPieces =  _playerPiece;
+      myPiece = _playerPiece[pid];
     };
 
     function resize() {
@@ -87,6 +89,73 @@
       dy = canvas.height / ny; // (ditto)
       invalidate();
       invalidateNext();
+    };
+
+    //-------------------------------------------------------------------------
+    // Logic for client prediction
+    //-------------------------------------------------------------------------
+
+    /**
+     * Check if a piece can fit into a position in the grid
+     */
+    function occupied(piece, x, y, dir) {
+      var result = false;
+      eachblock(piece.type, x, y, dir, function(x, y) {
+        if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) || getBlock(x,y)) {
+          result = true;
+        }
+      });
+
+      return result;
+    };
+
+    function unoccupied(piece, x, y, dir) {
+      return !occupied(piece, x, y, dir);
+    };
+
+    function handleAction(action) {
+      switch(action) {
+        case DIR.LEFT:  move(DIR.LEFT);  break;
+        case DIR.RIGHT: move(DIR.RIGHT); break;
+        case DIR.UP:    rotate(); break;
+        case DIR.DOWN:  drop(); break;
+      }
+    };
+
+    function move(dir) {
+      var x = myPiece.x, y = myPiece.y;
+
+      switch(dir) {
+        case DIR.RIGHT: x = x + 1; break;
+        case DIR.LEFT:  x = x - 1; break;
+        case DIR.DOWN:  y = y + 1; break;
+      }
+
+      if (unoccupied(myPiece, x, y, myPiece.dir)) {
+        myPiece.x = x;
+        myPiece.y = y;
+
+        return true;
+      }
+
+      // HACK Return null if the piece hits the ground
+      //   so that we can distinguish between other collision
+      else {
+        return false;
+      }
+    };
+
+    function rotate() {
+      var newdir = (myPiece.dir == DIR.MAX ? DIR.MIN : myPiece.dir + 1);
+      if (unoccupied(myPiece, myPiece.x, myPiece.y, newdir)) {
+        myPiece.dir = newdir;
+      }
+    };
+
+    function drop() {
+      if (unoccupied(myPiece, myPiece.x, myPiece.y + 1, myPiece.dir)) {
+        myPiece.y = myPiece.y + 1;
+      }
     };
 
     //-------------------------------------------------------------------------
@@ -172,5 +241,6 @@
     this.ctx = ctx;
     this.drawFrame = drawFrame;
     this.resize = resize;
+    this.handleAction = handleAction;
   };
 })();
