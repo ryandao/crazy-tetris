@@ -9,7 +9,6 @@
   (function() {
     var emit = socket.emit;
     socket.emit = function() {
-      console.log('***','emit', Array.prototype.slice.call(arguments));
       emit.apply(socket, arguments);
     };
   })();
@@ -43,11 +42,7 @@
 
     var tick = function() {
       if (playing) {
-        if (dataDirty) {
-          renderer.drawFrame();
-          dataDirty = false;
-        }
-
+        renderer.drawFrame();
         requestAnimationFrame(tick);
       }
     };
@@ -59,7 +54,6 @@
     socket.on('tick', function(data) {
       renderer.setBlocks(data.blocks);
       renderer.setPlayerPieces(data.playerPieces);
-      dataDirty = true;
     });
 
     socket.on('lost', function() {
