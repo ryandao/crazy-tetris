@@ -311,7 +311,7 @@
       for (var i = 0; i < players.length; i++) {
         setRandomPiece(players[i]);
       }
-    }
+    };
 
     function reset() {
       players = [];
@@ -401,7 +401,7 @@
       for (var i = 0; i < players.length; i++) {
         drop(players[i].getPiece());
       }
-    }
+    };
 
     function dropPiece(piece) {
       eachblock(piece.type, piece.x, piece.y, piece.dir, function(x, y) {
