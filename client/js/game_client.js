@@ -59,7 +59,7 @@
     });
 
     socket.on('win', function() {
-      renderer.setPlaying(false);
+      playing = false;
       alert('You win!');
     })
   };
