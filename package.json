@@ -7,5 +7,6 @@
     "connect" : "*",
     "connect-route" : "*",
     "socket.io" : "*",
+    "underscore": "*"
   }
 }
