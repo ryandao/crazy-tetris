@@ -6,10 +6,11 @@
     // game constants
     //-------------------------------------------------------------------------
 
-    var speed   = { start: 600, decrement: 50, min: 100 }, // how long before piece drops by 1 row (milliseconds)
-        nx      = 30, // width of tetris court (in blocks)
-        ny      = 20, // height of tetris court (in blocks)
-        DIR     = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
+    var speed = { start: 600, decrement: 50, min: 100 }; // how long before piece drops by 1 row (milliseconds)
+    var nx = 30, ny = 20; // width and height of tetris court (in blocks)
+    var DIR = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
+    var MAX_TIME = 60000; // time limit of a game (milliseconds)
+    var PLAYER_TYPE = { BUILDER: 0, DESTROYER: 1 };
 
     //-------------------------------------------------------------------------
     // game variables (initialized during reset)
@@ -18,7 +19,8 @@
     var dx, dy,        // pixel size of a single tetris block
         blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
         playing,       // true|false - game is in progress
-        dt,            // time since starting this game
+        dt,            // time since starting this game (milliseconds)
+        playTime,      // total playing time (milliseconds)
         next,          // the next piece
         rows,          // number of completed rows in the current game
         step,          // how long before current piece drops by 1 row
@@ -177,9 +179,9 @@
 
     /**
      * If the top row has at least one block in it,
-     * the game is lost.
+     * the builder side is lost.
      */
-    function isLost() {
+    function isBuilderLost() {
       for (var x = 0; x < nx; x ++) {
         if (getBlock(x, 0)) {
           return true;
@@ -269,10 +271,9 @@
       playing = true;
     };
 
-    function lose() {
-      console.log('lose');
+    function endGame(winningPlayerType) {
       playing = false;
-      _this.onLose();
+      _this.onEndGame(winningPlayerType);
     };
 
     function clearRows() {
@@ -319,6 +320,7 @@
 
     function reset() {
       players = [];
+      playTime = 0;
       dt = 0;
       step = speed.start;
       clearActions();
@@ -330,8 +332,12 @@
     function update(idt) {
       if (playing) {
         handleActions();
+        playTime = playTime + idt;
         dt = dt + idt;
-        if (dt > step) {
+
+        if (playTime >= MAX_TIME) {
+          endGame(PLAYER_TYPE.BUILDER);
+        } else if (dt > step) {
           dt = dt - step;
           dropAll();
         }
@@ -394,8 +400,8 @@
           clearActions(player);
           var tempPiece = setRandomPiece(player);
 
-          if (isLost() || occupied(tempPiece, tempPiece.x, tempPiece.y, tempPiece.dir)) {
-            lose();
+          if (isBuilderLost() || occupied(tempPiece, tempPiece.x, tempPiece.y, tempPiece.dir)) {
+            endGame(PLAYER_TYPE.DESTROYER);
           }
         }
       }
@@ -441,7 +447,7 @@
     };
 
     // game hooks
-    this.onLose = function() { return this; };
+    this.onEndGame = function() { return this; };
 
     // public declaration
     this.speed = speed;

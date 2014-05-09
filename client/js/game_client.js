@@ -56,11 +56,13 @@
 
     socket.on('lost', function() {
       playing = false;
+      console.log("lose");
       alert('You lose!');
     });
 
     socket.on('win', function() {
       playing = false;
+      console.log("win");
       alert('You win!');
     })
   };

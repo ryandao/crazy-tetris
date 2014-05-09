@@ -1,4 +1,3 @@
-var PLAYER_TYPE = { BUILDER: 0, DESTROYER: 1 };
 var _ = require('underscore');
 var http = require('http');
 var io = require('socket.io').listen(http.createServer().listen(8080));
@@ -36,10 +35,10 @@ io.sockets.on('connection', function (socket) {
 });
 
 function run() {
-  gameLogic.onLose = function() {
+  gameLogic.onEndGame = function(winningPlayerType) {
     var players = gameLogic.getPlayers();
     for (var i = 0; i < players.length; i++) {
-      var msg = players[i].playerType === PLAYER_TYPE.BUILDER ? 'lost' : 'win';
+      var msg = players[i].playerType === winningPlayerType ? 'win' : 'lost';
       io.sockets.socket(players[i].id).emit(msg);
     }
 
