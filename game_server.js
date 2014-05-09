@@ -1,4 +1,5 @@
 var PLAYER_TYPE = { BUILDER: 0, DESTROYER: 1 };
+var _ = require('underscore');
 var http = require('http');
 var io = require('socket.io').listen(http.createServer().listen(8080));
 var MAX_CLIENTS = 10; // quality control
@@ -12,8 +13,8 @@ io.sockets.on('connection', function (socket) {
   var sId = socket.id;
   var player;
 
-  // Let the client know its sid.
-  socket.emit('connectionAck', { sId: sId });
+  // Let the client know its sid and game configuration.
+  socket.emit('connectionAck', _.extend({ sId: sId}, gameLogic.getGameConfig()));
 
   // Start the game for the client.
   socket.on('play', function(playerType) {

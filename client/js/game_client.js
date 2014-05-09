@@ -7,6 +7,7 @@
 
   socket.on('connectionAck', function(data) {
     renderer.setPid(data.sId);
+    renderer.setGameConfig({ nx: data.nx, ny: data.ny });
     connected = true;
   });
 

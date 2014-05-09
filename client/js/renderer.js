@@ -4,13 +4,12 @@
     // game constants
     //-------------------------------------------------------------------------
 
-    var nx = 20, // width of tetris court (in blocks)
-        ny = 20, // height of tetris court (in blocks)
-        ctx = canvas.getContext('2d'),
+    var ctx = canvas.getContext('2d'),
         MY_COLOR = 'green',
         ALLY_COLOR = 'yellow',
         FOE_COLOR = 'red',
-        BLOCK_COLOR = 'gray';
+        BLOCK_COLOR = 'gray',
+        nx, ny; // width and height of the grid. Set by the server.
 
     //-------------------------------------------------------------------------
     // game variables (initialized during reset)
@@ -68,9 +67,14 @@
       }
     };
 
+    function setGameConfig(config) {
+      nx = config.nx;
+      ny = config.ny;
+    };
+
     function setPid(_pid) {
       pid = _pid;
-    }
+    };
 
     function setBlocks(_blocks) {
       blocks = _blocks;
@@ -166,6 +170,7 @@
     };
 
     // public declaration
+    this.setGameConfig = setGameConfig;
     this.setPid = setPid;
     this.setBlocks = setBlocks;
     this.setPlayerPieces = setPlayerPieces;

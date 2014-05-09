@@ -7,7 +7,7 @@
     //-------------------------------------------------------------------------
 
     var speed   = { start: 600, decrement: 50, min: 100 }, // how long before piece drops by 1 row (milliseconds)
-        nx      = 20, // width of tetris court (in blocks)
+        nx      = 30, // width of tetris court (in blocks)
         ny      = 20, // height of tetris court (in blocks)
         DIR     = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 };
 
@@ -52,6 +52,10 @@
     // Helper methods
     //-------------------------------------------------------------------------
 
+    function getGameConfig() {
+      return { nx: nx, ny: ny };
+    };
+
     function getGameState() {
       var playerPieces = {};
       for (var i = 0 ; i < players.length; i++) {
@@ -94,7 +98,7 @@
 
     function getPlayers() {
       return players;
-    }
+    };
 
     /**
      * Do the bit manipulation and iterate through each
@@ -183,7 +187,7 @@
       }
 
       return false;
-    }
+    };
 
     function hitTheGround(type, x, y, dir) {
       var result = false;
@@ -311,7 +315,7 @@
       for (var i = 0; i < players.length; i++) {
         setRandomPiece(players[i]);
       }
-    }
+    };
 
     function reset() {
       players = [];
@@ -441,11 +445,11 @@
 
     // public declaration
     this.speed = speed;
-    this.nx = nx; this.ny = ny;
     this.addPlayer = addPlayer;
     this.removePlayer = removePlayer;
     this.getPlayers = getPlayers;
     this.getGameState = getGameState;
+    this.getGameConfig = getGameConfig;
     this.setRandomPiece = setRandomPiece;
     this.play = play;
     this.update = update;
